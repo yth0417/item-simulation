@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Items {
+  itemCode      Int         @id @default(autoincrement()) @map("item_code")
+  itemName      String      @map("item_name")
+  itemPrice     Int         @map("item_price")
+
+  createdAt     DateTime    @default(now()) @map("createdAt")
+  updatedAt     DateTime    @updatedAt @map("updatedAt")
+
+  itemStat      ItemStats?  // 아이템(Items) 테이블과 아이템 스탯(ItemStats) 테이블이 1:1 관계를 맺음.
+
+  @@map("Items")
+}
+
+model ItemStats {
+  itemStatId    Int         @id @default(autoincrement()) @map("itemStatId")
+  itemCode      Int         @unique @map("item_code")
+  health        Int         @default(0) @map("health")
+  mana          Int         @default(0) @map("mana")
+  power         Int         @default(0) @map("power")
+
+  createdAt     DateTime    @default(now()) @map("createdAt")
+  updatedAt     DateTime    @updatedAt @map("updatedAt")
+
+  // Item 테이블과 관계를 설정.
+  item          Items       @relation(fields: [itemCode], references: [itemCode], onDelete: Cascade)  // Items 테이블과 관계를 설정.
+  @@map("ItemStats")
+}
+
+model Users {
+  userId        Int         @id @default(autoincrement()) @map("userId")
+  name          String      @map("name")
+  id            String      @unique @map("id")
+  password      String      @map("password")
+  
+  createdAt     DateTime    @default(now()) @map("createdAt")
+  updatedAt     DateTime    @updatedAt @map("updatedAt")
+
+  character     Characters[]  // 사용자(Users) 테이블과 캐릭터(Characters) 테이블이 1:N 관계를 맺음.
+
+  @@map("Users")
+}
+
+model Characters {
+  characterId   Int         @id @default(autoincrement()) @map("characterId")
+  userId        Int         @map("userId")
+  name          String      @unique @map("name")
+  health        Int         @default(500) @map("health")
+  mana          Int         @default(200) @map("mana")
+  power         Int         @default(100) @map("power")
+  money         Int         @default(10000) @map("money")
+
+  createdAt     DateTime    @default(now()) @map("createdAt")
+  updatedAt     DateTime    @updatedAt @map("updatedAt")
+
+  user          Users       @relation(fields: [userId], references: [userId], onDelete: Cascade)  // Users 테이블과 관계를 설정.
+  inventory     Inventorys[]  // 캐릭터(Characters) 테이블과 인벤토리(Inventorys) 테이블이 1:N 관계를 맺음.
+  equip         Equips[]  // 캐릭터(Characters) 테이블과 장비(Equips) 테이블이 1:N 관계를 맺음.
+
+  @@map("Characters")
+}
+
+model Inventorys {
+  inventoryId   Int         @id @default(autoincrement()) @map("inventoryId")
+  CharacterId   Int         @map("characterId")
+  itemCode      Int         @map("item_code")
+  count         Int         @map("count")
+
+  createdAt     DateTime    @default(now()) @map("createdAt")
+  updatedAt     DateTime    @updatedAt @map("updatedAt")
+
+  character     Characters  @relation(fields: [CharacterId], references: [characterId], onDelete: Cascade)  // Characters 테이블과 관계를 설정.
+
+  @@map("Inventorys")
+}
+
+model Equips {
+  equipId       Int         @id @default(autoincrement()) @map("equip_id")
+  CharacterId   Int         @map("characterId")
+  itemCode      Int         @map("item_code")
+
+  createdAt     DateTime    @default(now()) @map("createdAt")
+  updatedAt     DateTime    @updatedAt @map("updatedAt")
+
+  character     Characters  @relation(fields: [CharacterId], references: [characterId], onDelete: Cascade)  // Characters 테이블과 관계를 설정.
+
+  @@map("Equips")
+}
